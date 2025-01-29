@@ -18,8 +18,9 @@ from app.routes import game_routes, user_routes
 app.register_blueprint(game_routes.bp)
 app.register_blueprint(user_routes.bp)
 
+# データベースの作成
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    # データベースの作成
-    with app.app_context():
-        db.create_all()
     app.run(host='0.0.0.0', port=5000)
