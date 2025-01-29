@@ -85,6 +85,14 @@ def save_progress():
     db.session.commit()
     return jsonify({'message': '進捗が保存されました'})
 
+def get_command_str(command):
+    """コマンドオブジェクトから文字列を取得"""
+    if isinstance(command, str):
+        return command
+    elif isinstance(command, (VimCommand, WeakPoint)):
+        return command.command
+    return str(command)
+
 def get_random_command(commands, user_id, level):
     """過去3回と異なるコマンドをランダムに選択"""
     key = f"{user_id}_{level}"
@@ -92,32 +100,30 @@ def get_random_command(commands, user_id, level):
     
     # デバッグ用のログ
     current_app.logger.debug(f"User {user_id}, Level {level}")
-    current_app.logger.debug(f"Recent commands: {[cmd.command if hasattr(cmd, 'command') else cmd for cmd in recent_commands]}")
+    current_app.logger.debug(f"Recent commands: {[get_command_str(cmd) for cmd in recent_commands]}")
     
     # コマンドの比較を修正
     available_commands = []
+    recent_command_strs = {get_command_str(cmd) for cmd in recent_commands}
+    
     for cmd in commands:
-        cmd_str = cmd.command if hasattr(cmd, 'command') else cmd
-        is_recent = any(
-            (hasattr(recent, 'command') and recent.command == cmd_str) or
-            (not hasattr(recent, 'command') and recent == cmd_str)
-            for recent in recent_commands
-        )
-        if not is_recent:
+        cmd_str = get_command_str(cmd)
+        if cmd_str not in recent_command_strs:
             available_commands.append(cmd)
     
-    current_app.logger.debug(f"Available commands: {[cmd.command if hasattr(cmd, 'command') else cmd for cmd in available_commands]}")
+    current_app.logger.debug(f"Available commands: {[get_command_str(cmd) for cmd in available_commands]}")
     
     if not available_commands:
         current_app.logger.debug("No available commands found, resetting history")
-        recent_commands.clear()  # 履歴をリセット
+        recent_commands.clear()
         available_commands = commands
-        
+    
     command = random.choice(available_commands)
-    command_str = command.command if hasattr(command, 'command') else command
+    command_str = get_command_str(command)
     recent_commands.append(command_str)
     
     current_app.logger.debug(f"Selected command: {command_str}")
+    current_app.logger.debug(f"Updated recent commands: {[get_command_str(cmd) for cmd in recent_commands]}")
     return command
 
 def get_available_levels(current_level):
