@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { SettingsProvider } from './contexts/Settings';
@@ -8,6 +8,8 @@ import { SettingsProvider } from './contexts/Settings';
 import Menu from './pages/Menu';
 import Game from './pages/Game';
 import Result from './pages/Result';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 const theme = createTheme({
   palette: {
@@ -21,6 +23,11 @@ const theme = createTheme({
   },
 });
 
+function PrivateRoute({ children }) {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/login" />;
+}
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -28,9 +35,24 @@ function App() {
       <SettingsProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<Menu />} />
-            <Route path="/game/:level" element={<Game />} />
-            <Route path="/result" element={<Result />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/menu" element={
+              <PrivateRoute>
+                <Menu />
+              </PrivateRoute>
+            } />
+            <Route path="/game/:level" element={
+              <PrivateRoute>
+                <Game />
+              </PrivateRoute>
+            } />
+            <Route path="/result" element={
+              <PrivateRoute>
+                <Result />
+              </PrivateRoute>
+            } />
+            <Route path="/" element={<Navigate to="/menu" replace />} />
           </Routes>
         </Router>
       </SettingsProvider>
