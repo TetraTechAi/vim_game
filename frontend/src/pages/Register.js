@@ -11,9 +11,11 @@ import {
   Alert
 } from '@mui/material';
 import axios from 'axios';
+import { useAuth } from '../contexts/Auth';
 
 function Register() {
   const navigate = useNavigate();
+  const { setUser } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -45,13 +47,9 @@ function Register() {
         password: formData.password
       });
       
-      // 登録成功後、自動的にログイン
-      const loginResponse = await axios.post('/api/auth/login', {
-        username: formData.username,
-        password: formData.password
-      });
-      
-      localStorage.setItem('token', loginResponse.data.token);
+      // トークンを保存し、ユーザー情報をセット
+      localStorage.setItem('token', response.data.token);
+      setUser(response.data.user);
       navigate('/menu');
     } catch (error) {
       setError(error.response?.data?.error || '登録に失敗しました');
@@ -116,22 +114,16 @@ function Register() {
               type="submit"
               fullWidth
               variant="contained"
-              color="primary"
-              sx={{ mt: 3 }}
+              sx={{ mt: 3, mb: 2 }}
             >
               登録
             </Button>
+            <Box textAlign="center">
+              <Link href="/login" variant="body2">
+                既にアカウントをお持ちの方はこちら
+              </Link>
+            </Box>
           </form>
-
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Link
-              component="button"
-              variant="body2"
-              onClick={() => navigate('/login')}
-            >
-              既にアカウントをお持ちの方はこちら
-            </Link>
-          </Box>
         </Paper>
       </Box>
     </Container>

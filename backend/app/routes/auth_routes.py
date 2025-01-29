@@ -25,15 +25,22 @@ def register():
     # 新しいユーザーを作成
     user = User(
         username=data['username'],
-        email=data['email'],
-        password_hash=generate_password_hash(data['password'])
+        email=data['email']
     )
+    user.set_password(data['password'])
     
     db.session.add(user)
     db.session.commit()
     
+    # JWTトークンを生成
+    token = jwt.encode({
+        'user_id': user.id,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)
+    }, 'your-secret-key', algorithm='HS256')
+    
     return jsonify({
         'message': 'ユーザー登録が完了しました',
+        'token': token,
         'user': {
             'id': user.id,
             'username': user.username,

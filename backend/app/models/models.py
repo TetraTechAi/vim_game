@@ -34,8 +34,6 @@ class WeakPoint(db.Model):
     mistake_count = db.Column(db.Integer, default=1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    user = db.relationship('User', backref=db.backref('weak_points', lazy=True))
 
 class VimCommand(db.Model):
     id = db.Column(db.Integer, primary_key=True)
