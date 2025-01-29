@@ -3,11 +3,26 @@ from app.models.models import VimCommand, WeakPoint, Progress
 from app import db
 import random
 from collections import defaultdict, deque
+import logging
+
+# ロガーの設定
+logging.basicConfig(level=logging.DEBUG)
 
 bp = Blueprint('game', __name__, url_prefix='/api/game')
 
 # 最後に出題されたコマンドを記録する辞書（過去3回分）
 last_commands = defaultdict(lambda: deque(maxlen=3))
+
+@bp.route('/debug/commands/<int:level>', methods=['GET'])
+def debug_commands(level):
+    """デバッグ用：指定されたレベルの全コマンドを取得"""
+    commands = VimCommand.query.filter_by(difficulty_level=level).all()
+    return jsonify([{
+        'id': c.id,
+        'command': c.command,
+        'description': c.description,
+        'category': c.category
+    } for c in commands])
 
 @bp.route('/commands/<int:level>', methods=['GET'])
 def get_commands(level):
@@ -94,8 +109,9 @@ def get_random_command(commands, user_id, level):
     current_app.logger.debug(f"Available commands: {[cmd.command if hasattr(cmd, 'command') else cmd for cmd in available_commands]}")
     
     if not available_commands:
-        current_app.logger.debug("No available commands found")
-        return None
+        current_app.logger.debug("No available commands found, resetting history")
+        recent_commands.clear()  # 履歴をリセット
+        available_commands = commands
         
     command = random.choice(available_commands)
     command_str = command.command if hasattr(command, 'command') else command
