@@ -77,11 +77,18 @@ def generate_question(user_id, level):
         ).order_by(WeakPoint.mistake_count.desc()).limit(5).all()
         
         if weak_points:
-            command = random.choice(weak_points)
-            return jsonify({
-                'command': command.command,
-                'difficulty_level': command.difficulty_level
-            })
+            weak_point = random.choice(weak_points)
+            command = VimCommand.query.filter_by(
+                command=weak_point.command,
+                difficulty_level=weak_point.difficulty_level
+            ).first()
+            
+            if command:
+                return jsonify({
+                    'command': command.command,
+                    'description': command.description,
+                    'difficulty_level': command.difficulty_level
+                })
     
     # ランダムなコマンドを出題
     commands = VimCommand.query.filter_by(difficulty_level=level).all()

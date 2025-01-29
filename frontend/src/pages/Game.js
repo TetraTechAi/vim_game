@@ -105,14 +105,17 @@ function Game() {
           </Typography>
         </Paper>
 
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" gutterBottom>
-            このコマンドを入力してください:
+            問題
+          </Typography>
+          <Typography variant="h6" gutterBottom color="primary">
+            コマンド: {currentCommand.command}
           </Typography>
           <Typography variant="body1" gutterBottom>
-            説明: {currentCommand.description}
+            説明: {currentCommand.description || '説明が見つかりません'}
           </Typography>
-          <Box sx={{ my: 3 }}>
+          <Box sx={{ mt: 3 }}>
             <TextField
               fullWidth
               label="コマンドを入力"
@@ -123,16 +126,19 @@ function Game() {
                   handleSubmit();
                 }
               }}
+              variant="outlined"
+              autoFocus
             />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSubmit}
+              fullWidth
+              sx={{ mt: 2 }}
+            >
+              送信
+            </Button>
           </Box>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit}
-            fullWidth
-          >
-            送信
-          </Button>
         </Paper>
       </Box>
     </Container>
