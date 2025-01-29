@@ -36,8 +36,11 @@ class WeakPoint(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class VimCommand(db.Model):
+    __tablename__ = 'vim_commands'
+    
     id = db.Column(db.Integer, primary_key=True)
-    command = db.Column(db.String(50), nullable=False)
+    command = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(200), nullable=False)
     difficulty_level = db.Column(db.Integer, nullable=False)
-    category = db.Column(db.String(50), nullable=False)
+    category = db.Column(db.String(50), nullable=False, default='basic')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
