@@ -37,7 +37,10 @@ function Game() {
         level: parseInt(level),
         score: score
       }, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'X-Token': token // トークンをリクエストヘッダーに追加
+        }
       });
     }
     
@@ -59,8 +62,8 @@ function Game() {
       const now = Date.now();
       const timeSinceLastInput = now - lastInputTime.current;
       
-      // 最後の入力から5秒以上経過している場合のみタイマーを更新
-      if (timeSinceLastInput >= 5000) {
+      // 最後の入力から5秒以上経過していて、タイマーが残っている場合のみタイマーを更新
+      if (timeSinceLastInput >= 5000 && timeLeft > 0) {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timerRef.current);
@@ -77,7 +80,7 @@ function Game() {
         clearInterval(timerRef.current);
       }
     };
-  }, [level, endGame]);
+  }, [level, endGame, timeLeft]);
 
   useEffect(() => {
     setTimeLeft(gameTime);
@@ -92,7 +95,10 @@ function Game() {
       }
 
       const response = await axios.get(`/api/game/generate-question/${level}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'X-Token': token // トークンをリクエストヘッダーに追加
+        }
       });
       setCurrentCommand(response.data);
     } catch (error) {
@@ -127,7 +133,10 @@ function Game() {
           command: currentCommand.command,
           difficulty_level: level
         }, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'X-Token': token // トークンをリクエストヘッダーに追加
+          }
         });
       } catch (error) {
         console.error('苦手なコマンドの記録に失敗しました:', error);

@@ -145,9 +145,22 @@ def get_available_levels(current_level):
     weights = [0.3 if l < current_level else 0.7 for l in levels]
     return levels, weights
 
-@bp.route('/generate-question/<int:user_id>/<int:level>', methods=['GET'])
-def generate_question(user_id, level):
+@bp.route('/generate-question/<int:level>', methods=['GET'])
+def generate_question(level):
     """問題を生成（過去3回と異なる問題を出題）"""
+    # トークンからユーザーIDを取得
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({'error': '認証が必要です'}), 401
+    
+    try:
+        import jwt
+        token = token.split(' ')[1]  # "Bearer "を除去
+        payload = jwt.decode(token, 'your-secret-key', algorithms=['HS256'])
+        user_id = payload['user_id']
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return jsonify({'error': '無効なトークンです'}), 401
+    
     current_app.logger.debug(f"Generating question for user {user_id}, level {level}")
     
     # 出題するレベルをランダムに選択（現在のレベル以下）
