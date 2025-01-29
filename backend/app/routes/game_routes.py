@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from app.models.models import VimCommand, WeakPoint, Progress
 from app import db
 import random
@@ -72,12 +72,36 @@ def save_progress():
 
 def get_random_command(commands, user_id, level):
     """過去3回と異なるコマンドをランダムに選択"""
-    recent_commands = last_commands[f"{user_id}_{level}"]
-    available_commands = [cmd for cmd in commands if cmd not in recent_commands]
+    key = f"{user_id}_{level}"
+    recent_commands = last_commands[key]
+    
+    # デバッグ用のログ
+    current_app.logger.debug(f"User {user_id}, Level {level}")
+    current_app.logger.debug(f"Recent commands: {[cmd.command if hasattr(cmd, 'command') else cmd for cmd in recent_commands]}")
+    
+    # コマンドの比較を修正
+    available_commands = []
+    for cmd in commands:
+        cmd_str = cmd.command if hasattr(cmd, 'command') else cmd
+        is_recent = any(
+            (hasattr(recent, 'command') and recent.command == cmd_str) or
+            (not hasattr(recent, 'command') and recent == cmd_str)
+            for recent in recent_commands
+        )
+        if not is_recent:
+            available_commands.append(cmd)
+    
+    current_app.logger.debug(f"Available commands: {[cmd.command if hasattr(cmd, 'command') else cmd for cmd in available_commands]}")
+    
     if not available_commands:
+        current_app.logger.debug("No available commands found")
         return None
+        
     command = random.choice(available_commands)
-    recent_commands.append(command)
+    command_str = command.command if hasattr(command, 'command') else command
+    recent_commands.append(command_str)
+    
+    current_app.logger.debug(f"Selected command: {command_str}")
     return command
 
 def get_available_levels(current_level):
@@ -89,9 +113,13 @@ def get_available_levels(current_level):
 @bp.route('/generate-question/<int:user_id>/<int:level>', methods=['GET'])
 def generate_question(user_id, level):
     """問題を生成（過去3回と異なる問題を出題）"""
+    current_app.logger.debug(f"Generating question for user {user_id}, level {level}")
+    
     # 出題するレベルをランダムに選択（現在のレベル以下）
     available_levels, weights = get_available_levels(level)
     target_level = random.choices(available_levels, weights=weights, k=1)[0]
+    
+    current_app.logger.debug(f"Selected target level: {target_level}")
     
     # 苦手なコマンドを優先的に出題（70%の確率）
     if random.random() < 0.7:
@@ -99,6 +127,8 @@ def generate_question(user_id, level):
             user_id=user_id,
             difficulty_level=target_level
         ).order_by(WeakPoint.mistake_count.desc()).limit(5).all()
+        
+        current_app.logger.debug(f"Found {len(weak_points)} weak points")
         
         if weak_points:
             # 過去3回と異なる苦手コマンドを選択
@@ -110,6 +140,7 @@ def generate_question(user_id, level):
                 ).first()
                 
                 if command:
+                    current_app.logger.debug(f"Selected weak point command: {command.command}")
                     return jsonify({
                         'command': command.command,
                         'description': command.description,
@@ -118,9 +149,12 @@ def generate_question(user_id, level):
     
     # ランダムなコマンドを出題
     commands = VimCommand.query.filter_by(difficulty_level=target_level).all()
+    current_app.logger.debug(f"Found {len(commands)} commands for level {target_level}")
+    
     if commands:
         command = get_random_command(commands, user_id, level)
         if command:
+            current_app.logger.debug(f"Selected random command: {command.command}")
             return jsonify({
                 'command': command.command,
                 'description': command.description,
