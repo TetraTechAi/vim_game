@@ -3,20 +3,30 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 import os
 
-app = Flask(__name__)
-CORS(app)
+db = SQLAlchemy()
 
-# データベース設定
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vim_game.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+def create_app():
+    app = Flask(__name__)
+    CORS(app)
 
-# モデルのインポート
-from app.models import models
+    # データベース設定
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vim_game.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
+    # データベースの初期化
+    db.init_app(app)
 
-# ルートのインポート
-from app.routes import game_routes, user_routes
+    # モデルのインポート
+    with app.app_context():
+        from app.models import models
 
-# ルートの登録
-app.register_blueprint(game_routes.bp)
-app.register_blueprint(user_routes.bp)
+    # ルートの登録
+    with app.app_context():
+        from app.routes import game_routes, user_routes
+        app.register_blueprint(game_routes.bp)
+        app.register_blueprint(user_routes.bp)
+        
+        # データベースの作成
+        db.create_all()
+
+    return app
