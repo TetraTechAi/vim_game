@@ -93,7 +93,7 @@ def get_command_str(command):
         return command.command
     return str(command)
 
-def get_random_command(commands, user_id, level):
+def get_random_command(commands, user_id, level, is_weak_point=False):
     """過去3回と異なるコマンドをランダムに選択"""
     key = str(user_id)  # レベルに関係なく、ユーザーごとに履歴を管理
     history = command_history[key]
@@ -104,30 +104,31 @@ def get_random_command(commands, user_id, level):
     current_app.logger.debug(f"User {user_id}, Level {level}")
     current_app.logger.debug(f"Recent commands: {[get_command_str(cmd) for cmd in recent_commands]}")
     current_app.logger.debug(f"Last command: {get_command_str(last_command) if last_command else None}")
+    current_app.logger.debug(f"Is weak point: {is_weak_point}")
     
     # コマンドの比較を修正
     available_commands = []
     recent_command_strs = {get_command_str(cmd) for cmd in recent_commands}
+    last_command_str = get_command_str(last_command) if last_command else None
     
     for cmd in commands:
         cmd_str = get_command_str(cmd)
-        if cmd_str not in recent_command_strs and cmd_str != get_command_str(last_command):
+        if cmd_str not in recent_command_strs and cmd_str != last_command_str:
             available_commands.append(cmd)
     
     current_app.logger.debug(f"Available commands: {[get_command_str(cmd) for cmd in available_commands]}")
     
     if not available_commands:
         current_app.logger.debug("No available commands found, resetting history")
-        recent_commands.clear()
-        history['last'] = last_command  # 最後のコマンドは保持
-        available_commands = [cmd for cmd in commands if get_command_str(cmd) != get_command_str(last_command)]
+        recent_commands.clear()  # 履歴をクリア
+        
+        # 最後のコマンドを除外して利用可能なコマンドを取得
+        if last_command_str:
+            available_commands = [cmd for cmd in commands if get_command_str(cmd) != last_command_str]
         
         if not available_commands:
-            current_app.logger.debug("Still no available commands, using all commands except last")
-            available_commands = [cmd for cmd in commands if get_command_str(cmd) != get_command_str(last_command)]
-            if not available_commands:
-                current_app.logger.debug("No choice but to use all commands")
-                available_commands = commands
+            current_app.logger.debug("No available commands even after reset, using all commands")
+            available_commands = commands
     
     command = random.choice(available_commands)
     command_str = get_command_str(command)
@@ -166,7 +167,7 @@ def generate_question(user_id, level):
         
         if weak_points:
             # 過去3回と異なる苦手コマンドを選択
-            weak_point = get_random_command(weak_points, user_id, level)
+            weak_point = get_random_command(weak_points, user_id, level, is_weak_point=True)
             if weak_point:
                 command = VimCommand.query.filter_by(
                     command=weak_point.command,
@@ -186,7 +187,7 @@ def generate_question(user_id, level):
     current_app.logger.debug(f"Found {len(commands)} commands for level {target_level}")
     
     if commands:
-        command = get_random_command(commands, user_id, level)
+        command = get_random_command(commands, user_id, level, is_weak_point=False)
         if command:
             current_app.logger.debug(f"Selected random command: {command.command}")
             return jsonify({
