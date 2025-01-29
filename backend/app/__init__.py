@@ -30,8 +30,10 @@ def create_app():
     app.register_blueprint(game_routes.bp)
     app.register_blueprint(auth_routes.bp)
     
-    # データベースの作成
+    # データベースの作成とコマンドの初期化
     with app.app_context():
         db.create_all()
+        from app.commands import init_commands
+        init_commands()
     
     return app
