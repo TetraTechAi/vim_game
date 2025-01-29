@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 bp = Blueprint('game', __name__, url_prefix='/api/game')
 
 # 最後に出題されたコマンドを記録する辞書（過去3回分）
-last_commands = defaultdict(lambda: deque(maxlen=3))
+command_history = defaultdict(lambda: {'recent': deque(maxlen=3), 'last': None})
 
 @bp.route('/debug/commands/<int:level>', methods=['GET'])
 def debug_commands(level):
@@ -96,11 +96,14 @@ def get_command_str(command):
 def get_random_command(commands, user_id, level):
     """過去3回と異なるコマンドをランダムに選択"""
     key = f"{user_id}_{level}"
-    recent_commands = last_commands[key]
+    history = command_history[key]
+    recent_commands = history['recent']
+    last_command = history['last']
     
     # デバッグ用のログ
     current_app.logger.debug(f"User {user_id}, Level {level}")
     current_app.logger.debug(f"Recent commands: {[get_command_str(cmd) for cmd in recent_commands]}")
+    current_app.logger.debug(f"Last command: {get_command_str(last_command) if last_command else None}")
     
     # コマンドの比較を修正
     available_commands = []
@@ -108,7 +111,7 @@ def get_random_command(commands, user_id, level):
     
     for cmd in commands:
         cmd_str = get_command_str(cmd)
-        if cmd_str not in recent_command_strs:
+        if cmd_str not in recent_command_strs and cmd_str != get_command_str(last_command):
             available_commands.append(cmd)
     
     current_app.logger.debug(f"Available commands: {[get_command_str(cmd) for cmd in available_commands]}")
@@ -116,11 +119,17 @@ def get_random_command(commands, user_id, level):
     if not available_commands:
         current_app.logger.debug("No available commands found, resetting history")
         recent_commands.clear()
-        available_commands = commands
+        history['last'] = last_command  # 最後のコマンドは保持
+        available_commands = [cmd for cmd in commands if get_command_str(cmd) != get_command_str(last_command)]
+        
+        if not available_commands:
+            current_app.logger.debug("Still no available commands, using all commands")
+            available_commands = commands
     
     command = random.choice(available_commands)
     command_str = get_command_str(command)
     recent_commands.append(command_str)
+    history['last'] = command_str
     
     current_app.logger.debug(f"Selected command: {command_str}")
     current_app.logger.debug(f"Updated recent commands: {[get_command_str(cmd) for cmd in recent_commands]}")
