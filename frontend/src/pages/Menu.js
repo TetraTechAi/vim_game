@@ -35,12 +35,10 @@ function Menu() {
                 sx={{
                   p: 2,
                   textAlign: 'center',
-                  cursor: 'pointer',
                   '&:hover': {
                     backgroundColor: 'action.hover',
                   },
                 }}
-                onClick={() => handleLevelSelect(level)}
               >
                 <Typography variant="h6" component="div" gutterBottom>
                   レベル {level}
@@ -49,6 +47,7 @@ function Menu() {
                   variant="contained"
                   color="primary"
                   fullWidth
+                  onClick={() => handleLevelSelect(level)}
                 >
                   開始
                 </Button>
