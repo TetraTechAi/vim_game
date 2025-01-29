@@ -1,4 +1,4 @@
-from app import app, db
+from app import db
 from app.models.models import VimCommand
 
 # 各レベルのVimコマンドデータ
@@ -101,23 +101,19 @@ vim_commands = [
 ]
 
 def seed_database():
-    with app.app_context():
-        # 既存のデータをクリア
-        VimCommand.query.delete()
-        
-        # 新しいデータを追加
-        for level_data in vim_commands:
-            for cmd in level_data['commands']:
-                command = VimCommand(
-                    command=cmd['command'],
-                    description=cmd['description'],
-                    category=cmd['category'],
-                    difficulty_level=level_data['level']
-                )
-                db.session.add(command)
-        
-        db.session.commit()
-        print('データベースの初期化が完了しました')
+    """データベースにシードデータを追加"""
+    for level_data in vim_commands:
+        for command_data in level_data['commands']:
+            command = VimCommand(
+                command=command_data['command'],
+                description=command_data['description'],
+                category=command_data['category'],
+                difficulty_level=level_data['level']
+            )
+            db.session.add(command)
+    
+    db.session.commit()
+    print("シードデータの追加が完了しました")
 
 if __name__ == '__main__':
     seed_database()
