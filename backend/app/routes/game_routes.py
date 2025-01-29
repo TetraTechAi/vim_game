@@ -29,6 +29,30 @@ def get_weak_points(user_id):
         'difficulty_level': w.difficulty_level
     } for w in weak_points])
 
+@bp.route('/weak-points', methods=['POST'])
+def add_weak_point():
+    """苦手なコマンドを記録"""
+    data = request.get_json()
+    weak_point = WeakPoint.query.filter_by(
+        user_id=data['user_id'],
+        command=data['command'],
+        difficulty_level=data['difficulty_level']
+    ).first()
+
+    if weak_point:
+        weak_point.mistake_count += 1
+    else:
+        weak_point = WeakPoint(
+            user_id=data['user_id'],
+            command=data['command'],
+            difficulty_level=data['difficulty_level'],
+            mistake_count=1
+        )
+        db.session.add(weak_point)
+
+    db.session.commit()
+    return jsonify({'message': '苦手なコマンドを記録しました'})
+
 @bp.route('/progress', methods=['POST'])
 def save_progress():
     """ゲームの進捗を保存"""
