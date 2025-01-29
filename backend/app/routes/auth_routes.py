@@ -80,8 +80,9 @@ def get_user():
     try:
         token = token.split(' ')[1]  # "Bearer "を除去
         payload = jwt.decode(token, 'your-secret-key', algorithms=['HS256'])
-        user = User.query.get(payload['user_id'])
+        user_id = payload['user_id']
         
+        user = User.query.get(user_id)
         if not user:
             return jsonify({'error': 'ユーザーが見つかりません'}), 404
         
@@ -92,7 +93,5 @@ def get_user():
                 'email': user.email
             }
         })
-    except jwt.ExpiredSignatureError:
-        return jsonify({'error': 'トークンの有効期限が切れています'}), 401
-    except jwt.InvalidTokenError:
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
         return jsonify({'error': '無効なトークンです'}), 401
