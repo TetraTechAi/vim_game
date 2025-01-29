@@ -8,10 +8,13 @@ export function useSettings() {
 
 export function SettingsProvider({ children }) {
   const [showCommand, setShowCommand] = useState(false);
+  const [gameTime, setGameTime] = useState(60);
 
   const value = {
     showCommand,
     setShowCommand,
+    gameTime,
+    setGameTime,
   };
 
   return (

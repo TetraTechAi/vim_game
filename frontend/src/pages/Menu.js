@@ -8,15 +8,20 @@ import {
   Button,
   FormControlLabel,
   Checkbox,
-  Grid
+  Grid,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import { useSettings } from '../contexts/Settings';
 
 const levels = Array.from({ length: 10 }, (_, i) => i + 1);
+const gameTimes = [60, 90, 120, 180];
 
 function Menu() {
   const navigate = useNavigate();
-  const { showCommand, setShowCommand } = useSettings();
+  const { showCommand, setShowCommand, gameTime, setGameTime } = useSettings();
 
   const handleLevelSelect = (level) => {
     navigate(`/game/${level}`);
@@ -45,6 +50,20 @@ function Menu() {
             }
             label="コマンドを表示する（練習モード）"
           />
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>ゲーム時間</InputLabel>
+            <Select
+              value={gameTime}
+              onChange={(e) => setGameTime(e.target.value)}
+              label="ゲーム時間"
+            >
+              {gameTimes.map((time) => (
+                <MenuItem key={time} value={time}>
+                  {time}秒
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Paper>
         
         <Grid container spacing={2} sx={{ mt: 4 }}>

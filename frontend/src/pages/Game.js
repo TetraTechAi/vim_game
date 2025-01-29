@@ -14,12 +14,12 @@ import { useSettings } from '../contexts/Settings';
 function Game() {
   const { level } = useParams();
   const navigate = useNavigate();
-  const { showCommand } = useSettings();
+  const { showCommand, gameTime } = useSettings();
   const [currentCommand, setCurrentCommand] = useState(null);
   const [userInput, setUserInput] = useState('');
   const [score, setScore] = useState(0);
   const [mistakes, setMistakes] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60);
+  const [timeLeft, setTimeLeft] = useState(gameTime);
   const [totalCommands, setTotalCommands] = useState(0);
 
   const endGame = useCallback(() => {
@@ -54,6 +54,10 @@ function Game() {
 
     return () => clearInterval(timer);
   }, [level, endGame]);
+
+  useEffect(() => {
+    setTimeLeft(gameTime);
+  }, [gameTime]);
 
   const fetchNextCommand = async () => {
     try {

@@ -2,11 +2,12 @@ from flask import Blueprint, jsonify, request
 from app.models.models import VimCommand, WeakPoint, Progress
 from app import db
 import random
+from collections import defaultdict, deque
 
 bp = Blueprint('game', __name__, url_prefix='/api/game')
 
-# 最後に出題されたコマンドを記録する辞書
-last_commands = {}
+# 最後に出題されたコマンドを記録する辞書（過去3回分）
+last_commands = defaultdict(lambda: deque(maxlen=3))
 
 @bp.route('/commands/<int:level>', methods=['GET'])
 def get_commands(level):
@@ -69,12 +70,15 @@ def save_progress():
     db.session.commit()
     return jsonify({'message': '進捗が保存されました'})
 
-def get_random_command(commands, last_command=None):
-    """前回と異なるコマンドをランダムに選択"""
-    available_commands = [cmd for cmd in commands if cmd != last_command]
+def get_random_command(commands, user_id, level):
+    """過去3回と異なるコマンドをランダムに選択"""
+    recent_commands = last_commands[f"{user_id}_{level}"]
+    available_commands = [cmd for cmd in commands if cmd not in recent_commands]
     if not available_commands:
         return None
-    return random.choice(available_commands)
+    command = random.choice(available_commands)
+    recent_commands.append(command)
+    return command
 
 def get_available_levels(current_level):
     """出題可能なレベルのリストを取得"""
@@ -84,9 +88,7 @@ def get_available_levels(current_level):
 
 @bp.route('/generate-question/<int:user_id>/<int:level>', methods=['GET'])
 def generate_question(user_id, level):
-    """問題を生成（同じ問題が連続しないように、下位レベルも出題）"""
-    last_command = last_commands.get(f"{user_id}_{level}")
-    
+    """問題を生成（過去3回と異なる問題を出題）"""
     # 出題するレベルをランダムに選択（現在のレベル以下）
     available_levels, weights = get_available_levels(level)
     target_level = random.choices(available_levels, weights=weights, k=1)[0]
@@ -99,8 +101,8 @@ def generate_question(user_id, level):
         ).order_by(WeakPoint.mistake_count.desc()).limit(5).all()
         
         if weak_points:
-            # 前回と異なる苦手コマンドを選択
-            weak_point = get_random_command(weak_points, last_command)
+            # 過去3回と異なる苦手コマンドを選択
+            weak_point = get_random_command(weak_points, user_id, level)
             if weak_point:
                 command = VimCommand.query.filter_by(
                     command=weak_point.command,
@@ -108,7 +110,6 @@ def generate_question(user_id, level):
                 ).first()
                 
                 if command:
-                    last_commands[f"{user_id}_{level}"] = weak_point
                     return jsonify({
                         'command': command.command,
                         'description': command.description,
@@ -118,9 +119,8 @@ def generate_question(user_id, level):
     # ランダムなコマンドを出題
     commands = VimCommand.query.filter_by(difficulty_level=target_level).all()
     if commands:
-        command = get_random_command(commands, last_command)
+        command = get_random_command(commands, user_id, level)
         if command:
-            last_commands[f"{user_id}_{level}"] = command
             return jsonify({
                 'command': command.command,
                 'description': command.description,
