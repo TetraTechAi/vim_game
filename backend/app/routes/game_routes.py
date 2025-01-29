@@ -95,7 +95,7 @@ def get_command_str(command):
 
 def get_random_command(commands, user_id, level):
     """過去3回と異なるコマンドをランダムに選択"""
-    key = f"{user_id}_{level}"
+    key = str(user_id)  # レベルに関係なく、ユーザーごとに履歴を管理
     history = command_history[key]
     recent_commands = history['recent']
     last_command = history['last']
@@ -123,8 +123,11 @@ def get_random_command(commands, user_id, level):
         available_commands = [cmd for cmd in commands if get_command_str(cmd) != get_command_str(last_command)]
         
         if not available_commands:
-            current_app.logger.debug("Still no available commands, using all commands")
-            available_commands = commands
+            current_app.logger.debug("Still no available commands, using all commands except last")
+            available_commands = [cmd for cmd in commands if get_command_str(cmd) != get_command_str(last_command)]
+            if not available_commands:
+                current_app.logger.debug("No choice but to use all commands")
+                available_commands = commands
     
     command = random.choice(available_commands)
     command_str = get_command_str(command)
