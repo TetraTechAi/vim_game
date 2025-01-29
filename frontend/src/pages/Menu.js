@@ -3,16 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
-  Button,
-  Grid,
   Paper,
-  Box
+  Box,
+  Button,
+  FormControlLabel,
+  Checkbox,
+  Grid
 } from '@mui/material';
+import { useSettings } from '../contexts/Settings';
 
 const levels = Array.from({ length: 10 }, (_, i) => i + 1);
 
 function Menu() {
   const navigate = useNavigate();
+  const { showCommand, setShowCommand } = useSettings();
 
   const handleLevelSelect = (level) => {
     navigate(`/game/${level}`);
@@ -27,6 +31,21 @@ function Menu() {
         <Typography variant="h5" component="h2" gutterBottom align="center">
           レベルを選択してください
         </Typography>
+        
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            設定
+          </Typography>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={showCommand}
+                onChange={(e) => setShowCommand(e.target.checked)}
+              />
+            }
+            label="コマンドを表示する（練習モード）"
+          />
+        </Paper>
         
         <Grid container spacing={2} sx={{ mt: 4 }}>
           {levels.map((level) => (

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
+import { SettingsProvider } from './contexts/Settings';
 
 // Pages
 import Menu from './pages/Menu';
@@ -24,13 +25,15 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
-        <Routes>
-          <Route path="/" element={<Menu />} />
-          <Route path="/game/:level" element={<Game />} />
-          <Route path="/result" element={<Result />} />
-        </Routes>
-      </Router>
+      <SettingsProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Menu />} />
+            <Route path="/game/:level" element={<Game />} />
+            <Route path="/result" element={<Result />} />
+          </Routes>
+        </Router>
+      </SettingsProvider>
     </ThemeProvider>
   );
 }

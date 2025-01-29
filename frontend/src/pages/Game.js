@@ -6,19 +6,21 @@ import {
   Paper,
   Box,
   TextField,
-  Button,
   LinearProgress
 } from '@mui/material';
 import axios from 'axios';
+import { useSettings } from '../contexts/Settings';
 
 function Game() {
   const { level } = useParams();
   const navigate = useNavigate();
+  const { showCommand } = useSettings();
   const [currentCommand, setCurrentCommand] = useState(null);
   const [userInput, setUserInput] = useState('');
   const [score, setScore] = useState(0);
   const [mistakes, setMistakes] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
+  const [totalCommands, setTotalCommands] = useState(0);
 
   useEffect(() => {
     fetchNextCommand();
@@ -45,23 +47,26 @@ function Game() {
   };
 
   const handleInputChange = (e) => {
-    setUserInput(e.target.value);
-  };
+    const input = e.target.value;
+    setUserInput(input);
 
-  const handleSubmit = () => {
-    if (userInput.trim() === currentCommand.command) {
-      setScore(score + 10);
+    // 入力が完了したら自動的に判定
+    if (input === currentCommand.command) {
+      setScore(prev => prev + 10);
+      setTotalCommands(prev => prev + 1);
       setUserInput('');
       fetchNextCommand();
-    } else {
-      setMistakes(mistakes + 1);
-      // 苦手なコマンドとして記録
-      axios.post('/api/game/weak-points', {
-        user_id: 1,
-        command: currentCommand.command,
-        difficulty_level: level
-      });
     }
+  };
+
+  const handleMistake = () => {
+    setMistakes(prev => prev + 1);
+    // 苦手なコマンドとして記録
+    axios.post('/api/game/weak-points', {
+      user_id: 1,
+      command: currentCommand.command,
+      difficulty_level: level
+    });
   };
 
   const endGame = () => {
@@ -77,7 +82,7 @@ function Game() {
         score,
         level,
         mistakes,
-        totalCommands: Math.floor(score / 10)
+        totalCommands
       }
     });
   };
@@ -109,9 +114,11 @@ function Game() {
           <Typography variant="h5" gutterBottom>
             問題
           </Typography>
-          <Typography variant="h6" gutterBottom color="primary">
-            コマンド: {currentCommand.command}
-          </Typography>
+          {showCommand && (
+            <Typography variant="h6" gutterBottom color="primary">
+              コマンド: {currentCommand.command}
+            </Typography>
+          )}
           <Typography variant="body1" gutterBottom>
             説明: {currentCommand.description || '説明が見つかりません'}
           </Typography>
@@ -121,23 +128,17 @@ function Game() {
               label="コマンドを入力"
               value={userInput}
               onChange={handleInputChange}
-              onKeyPress={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  handleSubmit();
+                  if (userInput !== currentCommand.command) {
+                    handleMistake();
+                  }
+                  setUserInput('');
                 }
               }}
               variant="outlined"
               autoFocus
             />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSubmit}
-              fullWidth
-              sx={{ mt: 2 }}
-            >
-              送信
-            </Button>
           </Box>
         </Paper>
       </Box>
