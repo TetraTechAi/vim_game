@@ -24,8 +24,6 @@ function Game() {
   const [totalCommands, setTotalCommands] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
   const timerRef = useRef(null);
-  const lastInputTime = useRef(Date.now());
-  const previousTimeLeft = useRef(timeLeft);
 
   const endGame = useCallback(() => {
     if (isGameOver) return;
@@ -55,26 +53,22 @@ function Game() {
     });
   }, [score, level, mistakes, totalCommands, navigate, isGameOver]);
 
+  // 初期化時に最初の問題を取得
   useEffect(() => {
-    // 最初のコマンドを取得
     fetchNextCommand();
-    
-    // タイマーの設定
+  }, [level]);
+
+  // タイマーの設定
+  useEffect(() => {
     timerRef.current = setInterval(() => {
-      const now = Date.now();
-      const timeSinceLastInput = now - lastInputTime.current;
-      
-      // 最後の入力から3秒以上経過していて、タイマーが残っている場合のみタイマーを更新
-      if (timeSinceLastInput >= 3000 && timeLeft > 0) {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current);
-            endGame();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          endGame();
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => {
@@ -82,19 +76,12 @@ function Game() {
         clearInterval(timerRef.current);
       }
     };
-  }, [level, endGame, timeLeft]);
+  }, [endGame]);
 
+  // ゲーム時間が変更された場合
   useEffect(() => {
     setTimeLeft(gameTime);
   }, [gameTime]);
-
-  // 残り時間が変わったときに新しい問題を取得
-  useEffect(() => {
-    if (previousTimeLeft.current !== timeLeft) {
-      fetchNextCommand();
-      previousTimeLeft.current = timeLeft;
-    }
-  }, [timeLeft]);
 
   const fetchNextCommand = async () => {
     try {
@@ -122,19 +109,20 @@ function Game() {
   const handleInputChange = (e) => {
     const input = e.target.value;
     setUserInput(input);
-    lastInputTime.current = Date.now();
 
     // 入力が完了したら自動的に判定
     if (input === currentCommand.command) {
       setScore(prev => prev + 10);
       setTotalCommands(prev => prev + 1);
       setUserInput('');
-      // 正解時は新しい問題を取得しない（タイマーの更新時に取得される）
+      fetchNextCommand(); // 正解時に新しい問題を取得
     }
   };
 
   const handleMistake = async () => {
     setMistakes(prev => prev + 1);
+    fetchNextCommand(); // 間違えた時も新しい問題を取得
+    
     // 苦手なコマンドとして記録
     const token = localStorage.getItem('token');
     if (token) {
