@@ -24,14 +24,14 @@ def create_app():
     # モデルのインポート
     with app.app_context():
         from app.models import models
-
+    
     # ルートの登録
+    from app.routes import game_routes, auth_routes
+    app.register_blueprint(game_routes.bp)
+    app.register_blueprint(auth_routes.bp)
+    
+    # データベースの作成
     with app.app_context():
-        from app.routes import game_routes, user_routes
-        app.register_blueprint(game_routes.bp)
-        app.register_blueprint(user_routes.bp)
-        
-        # データベースの作成
         db.create_all()
-
+    
     return app

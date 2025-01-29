@@ -4,6 +4,7 @@ from app import db
 import random
 from collections import defaultdict, deque
 import logging
+import jwt
 
 # ロガーの設定
 logging.basicConfig(level=logging.DEBUG)
@@ -12,6 +13,19 @@ bp = Blueprint('game', __name__, url_prefix='/api/game')
 
 # 最後に出題されたコマンドを記録する辞書（過去3回分）
 command_history = defaultdict(lambda: {'recent': deque(maxlen=3), 'last': None})
+
+def get_user_id_from_token():
+    """トークンからユーザーIDを取得"""
+    token = request.headers.get('Authorization')
+    if not token:
+        return None
+    
+    try:
+        token = token.split(' ')[1]  # "Bearer "を除去
+        payload = jwt.decode(token, 'your-secret-key', algorithms=['HS256'])
+        return payload['user_id']
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
 
 @bp.route('/debug/commands/<int:level>', methods=['GET'])
 def debug_commands(level):
@@ -51,9 +65,16 @@ def get_weak_points(user_id):
 @bp.route('/weak-points', methods=['POST'])
 def add_weak_point():
     """苦手なコマンドを記録"""
+    user_id = get_user_id_from_token()
+    if not user_id:
+        return jsonify({'error': '認証が必要です'}), 401
+    
     data = request.get_json()
+    if not all(k in data for k in ['command', 'difficulty_level']):
+        return jsonify({'error': '必須フィールドが不足しています'}), 400
+    
     weak_point = WeakPoint.query.filter_by(
-        user_id=data['user_id'],
+        user_id=user_id,
         command=data['command'],
         difficulty_level=data['difficulty_level']
     ).first()
@@ -62,7 +83,7 @@ def add_weak_point():
         weak_point.mistake_count += 1
     else:
         weak_point = WeakPoint(
-            user_id=data['user_id'],
+            user_id=user_id,
             command=data['command'],
             difficulty_level=data['difficulty_level'],
             mistake_count=1
@@ -75,15 +96,23 @@ def add_weak_point():
 @bp.route('/progress', methods=['POST'])
 def save_progress():
     """ゲームの進捗を保存"""
+    user_id = get_user_id_from_token()
+    if not user_id:
+        return jsonify({'error': '認証が必要です'}), 401
+    
     data = request.get_json()
+    if not all(k in data for k in ['level', 'score']):
+        return jsonify({'error': '必須フィールドが不足しています'}), 400
+    
     progress = Progress(
-        user_id=data['user_id'],
+        user_id=user_id,
         level=data['level'],
         score=data['score']
     )
     db.session.add(progress)
     db.session.commit()
-    return jsonify({'message': '進捗が保存されました'})
+    
+    return jsonify({'message': '進捗を保存しました'})
 
 def get_command_str(command):
     """コマンドオブジェクトから文字列を取得"""
@@ -148,18 +177,9 @@ def get_available_levels(current_level):
 @bp.route('/generate-question/<int:level>', methods=['GET'])
 def generate_question(level):
     """問題を生成（過去3回と異なる問題を出題）"""
-    # トークンからユーザーIDを取得
-    token = request.headers.get('Authorization')
-    if not token:
+    user_id = get_user_id_from_token()
+    if not user_id:
         return jsonify({'error': '認証が必要です'}), 401
-    
-    try:
-        import jwt
-        token = token.split(' ')[1]  # "Bearer "を除去
-        payload = jwt.decode(token, 'your-secret-key', algorithms=['HS256'])
-        user_id = payload['user_id']
-    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
-        return jsonify({'error': '無効なトークンです'}), 401
     
     current_app.logger.debug(f"Generating question for user {user_id}, level {level}")
     
