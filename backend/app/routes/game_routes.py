@@ -5,6 +5,9 @@ import random
 
 bp = Blueprint('game', __name__, url_prefix='/api/game')
 
+# 最後に出題されたコマンドを記録する辞書
+last_commands = {}
+
 @bp.route('/commands/<int:level>', methods=['GET'])
 def get_commands(level):
     """指定されたレベルのコマンドを取得"""
@@ -66,9 +69,18 @@ def save_progress():
     db.session.commit()
     return jsonify({'message': '進捗が保存されました'})
 
+def get_random_command(commands, last_command=None):
+    """前回と異なるコマンドをランダムに選択"""
+    available_commands = [cmd for cmd in commands if cmd != last_command]
+    if not available_commands:
+        return None
+    return random.choice(available_commands)
+
 @bp.route('/generate-question/<int:user_id>/<int:level>', methods=['GET'])
 def generate_question(user_id, level):
-    """問題を生成"""
+    """問題を生成（同じ問題が連続しないように）"""
+    last_command = last_commands.get(f"{user_id}_{level}")
+    
     # 苦手なコマンドを優先的に出題（70%の確率）
     if random.random() < 0.7:
         weak_points = WeakPoint.query.filter_by(
@@ -77,27 +89,32 @@ def generate_question(user_id, level):
         ).order_by(WeakPoint.mistake_count.desc()).limit(5).all()
         
         if weak_points:
-            weak_point = random.choice(weak_points)
-            command = VimCommand.query.filter_by(
-                command=weak_point.command,
-                difficulty_level=weak_point.difficulty_level
-            ).first()
-            
-            if command:
-                return jsonify({
-                    'command': command.command,
-                    'description': command.description,
-                    'difficulty_level': command.difficulty_level
-                })
+            # 前回と異なる苦手コマンドを選択
+            weak_point = get_random_command(weak_points, last_command)
+            if weak_point:
+                command = VimCommand.query.filter_by(
+                    command=weak_point.command,
+                    difficulty_level=weak_point.difficulty_level
+                ).first()
+                
+                if command:
+                    last_commands[f"{user_id}_{level}"] = weak_point
+                    return jsonify({
+                        'command': command.command,
+                        'description': command.description,
+                        'difficulty_level': command.difficulty_level
+                    })
     
     # ランダムなコマンドを出題
     commands = VimCommand.query.filter_by(difficulty_level=level).all()
     if commands:
-        command = random.choice(commands)
-        return jsonify({
-            'command': command.command,
-            'description': command.description,
-            'difficulty_level': command.difficulty_level
-        })
+        command = get_random_command(commands, last_command)
+        if command:
+            last_commands[f"{user_id}_{level}"] = command
+            return jsonify({
+                'command': command.command,
+                'description': command.description,
+                'difficulty_level': command.difficulty_level
+            })
     
     return jsonify({'error': '問題の生成に失敗しました'}), 404
