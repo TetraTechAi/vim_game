@@ -25,6 +25,7 @@ function Game() {
   const [isGameOver, setIsGameOver] = useState(false);
   const timerRef = useRef(null);
   const lastInputTime = useRef(Date.now());
+  const previousTimeLeft = useRef(timeLeft);
 
   const endGame = useCallback(() => {
     if (isGameOver) return;
@@ -39,7 +40,7 @@ function Game() {
       }, {
         headers: { 
           Authorization: `Bearer ${token}`,
-          'X-Token': token // トークンをリクエストヘッダーに追加
+          'X-Token': token
         }
       });
     }
@@ -55,6 +56,7 @@ function Game() {
   }, [score, level, mistakes, totalCommands, navigate, isGameOver]);
 
   useEffect(() => {
+    // 最初のコマンドを取得
     fetchNextCommand();
     
     // タイマーの設定
@@ -62,8 +64,8 @@ function Game() {
       const now = Date.now();
       const timeSinceLastInput = now - lastInputTime.current;
       
-      // 最後の入力から5秒以上経過していて、タイマーが残っている場合のみタイマーを更新
-      if (timeSinceLastInput >= 5000 && timeLeft > 0) {
+      // 最後の入力から3秒以上経過していて、タイマーが残っている場合のみタイマーを更新
+      if (timeSinceLastInput >= 3000 && timeLeft > 0) {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timerRef.current);
@@ -86,6 +88,14 @@ function Game() {
     setTimeLeft(gameTime);
   }, [gameTime]);
 
+  // 残り時間が変わったときに新しい問題を取得
+  useEffect(() => {
+    if (previousTimeLeft.current !== timeLeft) {
+      fetchNextCommand();
+      previousTimeLeft.current = timeLeft;
+    }
+  }, [timeLeft]);
+
   const fetchNextCommand = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -97,7 +107,7 @@ function Game() {
       const response = await axios.get(`/api/game/generate-question/${level}`, {
         headers: { 
           Authorization: `Bearer ${token}`,
-          'X-Token': token // トークンをリクエストヘッダーに追加
+          'X-Token': token
         }
       });
       setCurrentCommand(response.data);
@@ -119,7 +129,7 @@ function Game() {
       setScore(prev => prev + 10);
       setTotalCommands(prev => prev + 1);
       setUserInput('');
-      fetchNextCommand();
+      // 正解時は新しい問題を取得しない（タイマーの更新時に取得される）
     }
   };
 
@@ -135,7 +145,7 @@ function Game() {
         }, {
           headers: { 
             Authorization: `Bearer ${token}`,
-            'X-Token': token // トークンをリクエストヘッダーに追加
+            'X-Token': token
           }
         });
       } catch (error) {
@@ -199,14 +209,15 @@ function Game() {
           </Box>
         </Paper>
 
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={endGame}
-          fullWidth
-        >
-          ゲームを終了
-        </Button>
+        <Box sx={{ mt: 3, textAlign: 'center' }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={endGame}
+          >
+            ゲームを終了
+          </Button>
+        </Box>
       </Box>
     </Container>
   );
