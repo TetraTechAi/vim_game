@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -22,6 +22,24 @@ function Game() {
   const [timeLeft, setTimeLeft] = useState(60);
   const [totalCommands, setTotalCommands] = useState(0);
 
+  const endGame = useCallback(() => {
+    // スコアを保存
+    axios.post('/api/game/progress', {
+      user_id: 1,
+      level: parseInt(level),
+      score: score
+    });
+    
+    navigate('/result', { 
+      state: { 
+        score,
+        level,
+        mistakes,
+        totalCommands
+      }
+    });
+  }, [score, level, mistakes, totalCommands, navigate]);
+
   useEffect(() => {
     fetchNextCommand();
     const timer = setInterval(() => {
@@ -35,7 +53,7 @@ function Game() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [level]);
+  }, [level, endGame]);
 
   const fetchNextCommand = async () => {
     try {
@@ -66,24 +84,6 @@ function Game() {
       user_id: 1,
       command: currentCommand.command,
       difficulty_level: level
-    });
-  };
-
-  const endGame = () => {
-    // スコアを保存
-    axios.post('/api/game/progress', {
-      user_id: 1,
-      level: parseInt(level),
-      score: score
-    });
-    
-    navigate('/result', { 
-      state: { 
-        score,
-        level,
-        mistakes,
-        totalCommands
-      }
     });
   };
 
