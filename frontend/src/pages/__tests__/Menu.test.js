@@ -1,21 +1,20 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useNavigate } from 'react-router-dom';
 import Menu from '../Menu';
 
-// モックのナビゲーション関数
-const mockNavigate = jest.fn();
-
-// react-router-domのuseNavigateをモック化
+// useNavigateをモック化
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
-  useNavigate: () => mockNavigate,
+  useNavigate: jest.fn()
 }));
 
 describe('Menu Component', () => {
+  let mockNavigate;
+
   beforeEach(() => {
-    // 各テストの前にモックをリセット
-    mockNavigate.mockReset();
+    mockNavigate = jest.fn();
+    useNavigate.mockReturnValue(mockNavigate);
   });
 
   test('renders menu title', () => {
@@ -24,7 +23,6 @@ describe('Menu Component', () => {
         <Menu />
       </BrowserRouter>
     );
-    
     expect(screen.getByText('Vim学習ゲーム')).toBeInTheDocument();
     expect(screen.getByText('レベルを選択してください')).toBeInTheDocument();
   });
@@ -35,7 +33,7 @@ describe('Menu Component', () => {
         <Menu />
       </BrowserRouter>
     );
-    
+
     // レベル1から10までのボタンが存在することを確認
     for (let i = 1; i <= 10; i++) {
       expect(screen.getByText(`レベル ${i}`)).toBeInTheDocument();
@@ -50,7 +48,8 @@ describe('Menu Component', () => {
     );
     
     // レベル5のボタンをクリック
-    fireEvent.click(screen.getByText('レベル 5').closest('button'));
+    const button = screen.getByText('レベル 5');
+    fireEvent.click(button);
     
     // 正しいパスに遷移することを確認
     expect(mockNavigate).toHaveBeenCalledWith('/game/5');

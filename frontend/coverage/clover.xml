@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1738132479546" clover="3.2.0">
-  <project timestamp="1738132479546" name="All files">
-    <metrics statements="66" coveredstatements="14" conditionals="14" coveredconditionals="2" methods="26" coveredmethods="6" elements="106" coveredelements="22" complexity="0" loc="66" ncloc="66" packages="3" files="5" classes="5"/>
+<coverage generated="1738132587972" clover="3.2.0">
+  <project timestamp="1738132587972" name="All files">
+    <metrics statements="66" coveredstatements="44" conditionals="14" coveredconditionals="7" methods="26" coveredmethods="13" elements="106" coveredelements="64" complexity="0" loc="66" ncloc="66" packages="3" files="5" classes="5"/>
     <package name="src">
       <metrics statements="2" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
       <file name="App.js" path="/Users/nakayamaseiya/work/git/github.com/TetraTechAi/vim_game/frontend/src/App.js">
@@ -11,47 +11,47 @@
       </file>
     </package>
     <package name="src.pages">
-      <metrics statements="54" coveredstatements="14" conditionals="12" coveredconditionals="2" methods="18" coveredmethods="6"/>
+      <metrics statements="54" coveredstatements="44" conditionals="12" coveredconditionals="7" methods="18" coveredmethods="13"/>
       <file name="Game.js" path="/Users/nakayamaseiya/work/git/github.com/TetraTechAi/vim_game/frontend/src/pages/Game.js">
-        <metrics statements="38" coveredstatements="0" conditionals="8" coveredconditionals="0" methods="10" coveredmethods="0"/>
-        <line num="15" count="0" type="stmt"/>
-        <line num="16" count="0" type="stmt"/>
-        <line num="17" count="0" type="stmt"/>
-        <line num="18" count="0" type="stmt"/>
-        <line num="19" count="0" type="stmt"/>
-        <line num="20" count="0" type="stmt"/>
-        <line num="21" count="0" type="stmt"/>
-        <line num="23" count="0" type="stmt"/>
-        <line num="24" count="0" type="stmt"/>
-        <line num="25" count="0" type="stmt"/>
+        <metrics statements="38" coveredstatements="30" conditionals="8" coveredconditionals="5" methods="10" coveredmethods="7"/>
+        <line num="15" count="10" type="stmt"/>
+        <line num="16" count="10" type="stmt"/>
+        <line num="17" count="10" type="stmt"/>
+        <line num="18" count="10" type="stmt"/>
+        <line num="19" count="10" type="stmt"/>
+        <line num="20" count="10" type="stmt"/>
+        <line num="21" count="10" type="stmt"/>
+        <line num="23" count="10" type="stmt"/>
+        <line num="24" count="3" type="stmt"/>
+        <line num="25" count="3" type="stmt"/>
         <line num="26" count="0" type="stmt"/>
         <line num="27" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="28" count="0" type="stmt"/>
         <line num="29" count="0" type="stmt"/>
         <line num="31" count="0" type="stmt"/>
-        <line num="35" count="0" type="stmt"/>
-        <line num="38" count="0" type="stmt"/>
-        <line num="39" count="0" type="stmt"/>
-        <line num="40" count="0" type="stmt"/>
-        <line num="41" count="0" type="stmt"/>
+        <line num="35" count="3" type="stmt"/>
+        <line num="38" count="10" type="stmt"/>
+        <line num="39" count="4" type="stmt"/>
+        <line num="40" count="4" type="stmt"/>
+        <line num="41" count="4" type="stmt"/>
         <line num="43" count="0" type="stmt"/>
-        <line num="47" count="0" type="stmt"/>
-        <line num="48" count="0" type="stmt"/>
-        <line num="51" count="0" type="stmt"/>
-        <line num="52" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="53" count="0" type="stmt"/>
-        <line num="54" count="0" type="stmt"/>
-        <line num="55" count="0" type="stmt"/>
-        <line num="57" count="0" type="stmt"/>
-        <line num="59" count="0" type="stmt"/>
-        <line num="67" count="0" type="stmt"/>
+        <line num="47" count="10" type="stmt"/>
+        <line num="48" count="2" type="stmt"/>
+        <line num="51" count="10" type="stmt"/>
+        <line num="52" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="53" count="1" type="stmt"/>
+        <line num="54" count="1" type="stmt"/>
+        <line num="55" count="1" type="stmt"/>
+        <line num="57" count="1" type="stmt"/>
+        <line num="59" count="1" type="stmt"/>
+        <line num="67" count="10" type="stmt"/>
         <line num="69" count="0" type="stmt"/>
         <line num="75" count="0" type="stmt"/>
-        <line num="85" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="86" count="0" type="stmt"/>
-        <line num="89" count="0" type="stmt"/>
-        <line num="122" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="123" count="0" type="stmt"/>
+        <line num="85" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="86" count="3" type="stmt"/>
+        <line num="89" count="7" type="stmt"/>
+        <line num="122" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="123" count="2" type="stmt"/>
       </file>
       <file name="Menu.js" path="/Users/nakayamaseiya/work/git/github.com/TetraTechAi/vim_game/frontend/src/pages/Menu.js">
         <metrics statements="7" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="3"/>
