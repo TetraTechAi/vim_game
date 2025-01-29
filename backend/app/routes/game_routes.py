@@ -76,16 +76,26 @@ def get_random_command(commands, last_command=None):
         return None
     return random.choice(available_commands)
 
+def get_available_levels(current_level):
+    """出題可能なレベルのリストを取得"""
+    levels = list(range(1, current_level + 1))
+    weights = [0.3 if l < current_level else 0.7 for l in levels]
+    return levels, weights
+
 @bp.route('/generate-question/<int:user_id>/<int:level>', methods=['GET'])
 def generate_question(user_id, level):
-    """問題を生成（同じ問題が連続しないように）"""
+    """問題を生成（同じ問題が連続しないように、下位レベルも出題）"""
     last_command = last_commands.get(f"{user_id}_{level}")
+    
+    # 出題するレベルをランダムに選択（現在のレベル以下）
+    available_levels, weights = get_available_levels(level)
+    target_level = random.choices(available_levels, weights=weights, k=1)[0]
     
     # 苦手なコマンドを優先的に出題（70%の確率）
     if random.random() < 0.7:
         weak_points = WeakPoint.query.filter_by(
             user_id=user_id,
-            difficulty_level=level
+            difficulty_level=target_level
         ).order_by(WeakPoint.mistake_count.desc()).limit(5).all()
         
         if weak_points:
@@ -106,7 +116,7 @@ def generate_question(user_id, level):
                     })
     
     # ランダムなコマンドを出題
-    commands = VimCommand.query.filter_by(difficulty_level=level).all()
+    commands = VimCommand.query.filter_by(difficulty_level=target_level).all()
     if commands:
         command = get_random_command(commands, last_command)
         if command:
