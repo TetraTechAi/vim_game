@@ -10,10 +10,11 @@ import {
   Link,
   Alert
 } from '@mui/material';
-import axios from 'axios';
+import { useAuth } from '../contexts/Auth';
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -32,8 +33,7 @@ function Login() {
     setError('');
 
     try {
-      const response = await axios.post('/api/auth/login', formData);
-      localStorage.setItem('token', response.data.token);
+      await login(formData.username, formData.password);
       navigate('/menu');
     } catch (error) {
       setError(error.response?.data?.error || 'ログインに失敗しました');
@@ -78,22 +78,16 @@ function Login() {
               type="submit"
               fullWidth
               variant="contained"
-              color="primary"
-              sx={{ mt: 3 }}
+              sx={{ mt: 3, mb: 2 }}
             >
               ログイン
             </Button>
+            <Box textAlign="center">
+              <Link href="/register" variant="body2">
+                アカウントをお持ちでない方はこちら
+              </Link>
+            </Box>
           </form>
-
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Link
-              component="button"
-              variant="body2"
-              onClick={() => navigate('/register')}
-            >
-              アカウントをお持ちでない方はこちら
-            </Link>
-          </Box>
         </Paper>
       </Box>
     </Container>
